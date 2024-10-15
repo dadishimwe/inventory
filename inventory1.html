@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Equipment Inventory Website</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fafafa;
+            --text-color: #262626;
+            --card-bg: #fff;
+            --border-color: #dbdbdb;
+        }
+
+        .dark-mode {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --border-color: #333;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        header {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            text-align: center;
+        }
+        h1 {
+            font-family: 'Grand Hotel', cursive;
+            color: var(--text-color);
+            margin: 0;
+        }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        nav ul li {
+            margin: 0 1rem;
+        }
+        nav ul li a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        main {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #search-bar, #sort-dropdown {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        #equipment-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .equipment-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .equipment-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            margin-bottom: 0.5rem;
+            border-radius: 3px;
+            background-color: #f0f0f0; /* Light grey background as fallback */
+        }
+        .equipment-name {
+            font-family: 'Grand Hotel', cursive;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .equipment-description {
+            font-size: 0.9rem;
+            color: #8e8e8e;
+            margin-bottom: 0.5rem;
+        }
+        .equipment-status, .equipment-quantity, .equipment-maintenance {
+            padding: 0.3rem;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        .status-available { color: green; }
+        .status-in-use { color: orange; }
+        .status-not-available { color: red; }
+        .checkout-btn {
+            background-color: #0095f6;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        .checkout-btn:disabled {
+            background-color: #b2dffc;
+            cursor: not-allowed;
+        }
+        #dark-mode-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Enhanced Equipment Inventory</h1>
+        <nav>
+            <ul>
+                <li><a href="#" data-category="all">All Equipment</a></li>
+                <li><a href="#" data-category="tools">Tools</a></li>
+                <li><a href="#" data-category="safety">Safety Gear</a></li>
+                <li><a href="#" data-category="misc">Miscellaneous</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <input type="text" id="search-bar" placeholder="Search equipment...">
+        <select id="sort-dropdown">
+            <option value="name">Sort by Name</option>
+            <option value="status">Sort by Status</option>
+            <option value="quantity">Sort by Quantity</option>
+        </select>
+        <div id="equipment-container"></div>
+    </main>
+    <button id="dark-mode-toggle">Toggle Dark Mode</button>
+    <script>
+        const equipment = [
+            { name: "Ladder", category: "tools", description: "A portable climbing device made of two vertical posts connected by horizontal rungs, used for reaching heights.", status: "available", quantity: 5, lastMaintenance: "2024-03-15", nextMaintenance: "2024-09-15", imageUrl: "back.png" },
+            { name: "Drill", category: "tools", description: "A power tool used for making round holes or driving fasteners, typically featuring a rotating drill bit.", status: "available", quantity: 3, lastMaintenance: "2024-02-20", nextMaintenance: "2024-08-20", imageUrl: "images/drill.jpg" },
+            { name: "Orange Vest", category: "safety", description: "A high-visibility safety vest designed to enhance visibility in hazardous environments.", status: "available", quantity: 10, lastMaintenance: "2024-01-10", nextMaintenance: "2024-07-10", imageUrl: "/images/ovest.jpg" },
+            { name: "Red Helmet", category: "safety", description: "A protective headgear colored red, commonly used in construction or industrial settings for safety.", status: "available", quantity: 8, lastMaintenance: "2024-03-01", nextMaintenance: "2024-09-01", imageUrl: "images/rhelmet.jpg" },
+            { name: "Orange Helmet", category: "safety", description: "A high-visibility helmet designed for head protection in construction or hazardous work environments.", status: "available", quantity: 8, lastMaintenance: "2024-03-01", nextMaintenance: "2024-09-01", imageUrl: "/images/ohelmet.jpg" },
+            { name: "White Harness", category: "safety", description: "A safety harness colored white, used to secure a worker to a fall protection system while working at heights.", status: "available", quantity: 4, lastMaintenance: "2024-02-15", nextMaintenance: "2024-08-15", imageUrl: "/images/wharness.jpg" },
+            { name: "Orange Harness", category: "safety", description: "A safety harness colored orange, providing fall protection and support for workers at elevated locations.", status: "available", quantity: 4, lastMaintenance: "2024-02-15", nextMaintenance: "2024-08-15", imageUrl: "/images/oharness.jpg" },
+            { name: "Yellow Gloves", category: "safety", description: "Protective gloves colored yellow, typically used for handling materials or tasks requiring hand safety.", status: "available", quantity: 20, lastMaintenance: "2024-01-05", nextMaintenance: "2024-07-05", imageUrl: "/images/ygloves.jpg" },
+            { name: "Red Gloves", category: "safety", description: "Safety gloves in red, often used in various industrial applications for hand protection.", status: "available", quantity: 20, lastMaintenance: "2024-01-05", nextMaintenance: "2024-07-05", imageUrl: "/images/rgloves.jpg" },
+            { name: "Orange Gloves", category: "safety", description: "Bright orange gloves designed for visibility and protection during manual labor or industrial tasks.", status: "available", quantity: 20, lastMaintenance: "2024-01-05", nextMaintenance: "2024-07-05", imageUrl: "/images/ladder.jpg" },
+            { name: "Soldering Iron", category: "tools", description: "A hand-held tool with a heated metal tip used to melt solder for joining electronic components.", status: "available", quantity: 2, lastMaintenance: "2024-03-10", nextMaintenance: "2024-09-10", imageUrl: "/images/siron.jpg" },
+            { name: "Measuring Tape", category: "tools", description: "A retractable tape used for measuring distances or dimensions accurately.", status: "available", quantity: 10, lastMaintenance: "2024-01-20", nextMaintenance: "2024-07-20", imageUrl: "/images/mtape.jpg" },
+            { name: "Caution Tape", category: "safety", description: "Brightly colored tape used to indicate a hazardous area and prevent access for safety reasons.", status: "available", quantity: 15, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/ctape.jpg" },
+            { name: "Duct Tape", category: "misc", description: "A strong, versatile adhesive tape used for repairs and sealing in various applications.", status: "available", quantity: 10, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/dtape.jpg" },
+            { name: "Foldable Knife", category: "tools", description: "A portable knife with a retractable blade for safety and ease of storage.", status: "available", quantity: 5, lastMaintenance: "2024-02-01", nextMaintenance: "2024-08-01", imageUrl: "/images/fnives.jpg" },
+            { name: "Sealant Gun", category: "tools", description: "A tool designed for dispensing sealant from a cartridge for applications like caulking.", status: "available", quantity: 3, lastMaintenance: "2024-02-10", nextMaintenance: "2024-08-10", imageUrl: "/images/sgun.jpg" },
+            { name: "Silicone Sealant", category: "misc", description: "A flexible, waterproof sealant used for sealing gaps and joints in various materials.", status: "available", quantity: 10, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/ssealant.jpg" },
+            { name: "Yellow Screws & Plugs", category: "misc", description: "Fasteners and plugs colored yellow, typically used for securing materials together.", status: "available", quantity: 100, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/yscrews.jpg" },
+            { name: "White Screws & Plugs", category: "misc", description: "Fasteners and plugs in white, used for securing components in various applications.", status: "available", quantity: 100, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/wscrews.jpg" },
+            { name: "Groove Joint Pliers", category: "tools", description: "Adjustable pliers designed for gripping and turning objects with variable widths.", status: "available", quantity: 5, lastMaintenance: "2024-02-05", nextMaintenance: "2024-08-05", imageUrl: "/images/jpliers.jpg" },
+            { name: "Combination Pliers", category: "tools", description: "Multi-purpose pliers that can grip, twist, and cut wires or small materials.", status: "available", quantity: 5, lastMaintenance: "2024-02-05", nextMaintenance: "2024-08-05", imageUrl: "/images/cpliers.jpg" },
+            { name: "Screwdriver Bit Set", category: "tools", description: "A collection of interchangeable bits for driving screws in various sizes and types.", status: "available", quantity: 3, lastMaintenance: "2024-02-15", nextMaintenance: "2024-08-15", imageUrl: "/images/screwdriverbs.jpg" },
+            { name: "Screwdriver", category: "tools", description: "A hand tool used for driving screws into materials or removing them.", status: "available", quantity: 10, lastMaintenance: "2024-02-15", nextMaintenance: "2024-08-15", imageUrl: "/images/screwdriver.jpg" },
+            { name: "Hole Cutters", category: "tools", description: "Tools used to create circular openings in various materials, typically with a drill.", status: "available", quantity: 2, lastMaintenance: "2024-03-01", nextMaintenance: "2024-09-01", imageUrl: "/images/hcutters.jpg" },
+            { name: "Wrench", category: "tools", description: "A hand tool used for gripping, fastening, and loosening nuts and bolts.", status: "available", quantity: 5, lastMaintenance: "2024-02-20", nextMaintenance: "2024-08-20", imageUrl: "/images/wrench.jpg" },
+            { name: "Pipe Wrench", category: "tools", description: "A specialized tool designed for gripping and turning pipe fittings and other cylindrical objects.", status: "available", quantity: 2, lastMaintenance: "2024-02-20", nextMaintenance: "2024-08-20", imageUrl: "/images/pwrench.jpg" },
+            { name: "Goggles", category: "safety", description: "Protective eyewear designed to shield the eyes from debris, chemicals, and other hazards.", status: "available", quantity: 15, lastMaintenance: "2024-01-15", nextMaintenance: "2024-07-15", imageUrl: "/images/goggles.jpg" },
+            { name: "Saw", category: "tools", description: "A hand or power tool with a serrated blade used for cutting through materials like wood or metal.", status: "available", quantity: 3, lastMaintenance: "2024-03-05", nextMaintenance: "2024-09-05", imageUrl: "/images/saw.jpg" },
+            { name: "Zip Ties", category: "misc", description: "Plastic fastening devices used to secure items together, often in electrical or organizational applications.", status: "available", quantity: 200, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/zties.jpg" },
+            { name: "Water Level", category: "tools", description: "A tool used to determine horizontal or vertical levels by observing the water level in a tube.", status: "available", quantity: 2, lastMaintenance: "2024-02-25", nextMaintenance: "2024-08-25", imageUrl: "/images/wlevel.jpg" },
+            { name: "Flash Band/Tape", category: "misc", description: "A self-adhesive tape used for sealing and protecting various surfaces, often in roofing applications.", status: "available", quantity: 10, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/fband.jpg" },
+            { name: "U Clamps", category: "misc", description: "Hardware fasteners shaped like a 'U,' used for securing pipes or cables to a surface.", status: "available", quantity: 50, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/uclamps.jpg" },
+            { name: "Hose Clamps", category: "misc", description: "Adjustable clamps used to secure hoses to fittings or nozzles, preventing leaks.", status: "available", quantity: 30, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/hclamps.jpg" },
+            { name: "Vests Large", category: "safety", description: "High-visibility safety vests in large size, designed for use in industrial or construction environments.", status: "available", quantity: 10, lastMaintenance: "2024-01-10", nextMaintenance: "2024-07-10", imageUrl: "/images/vlarge.jpg" },
+            { name: "Cordless Drill", category: "tools", description: "A battery-powered drill used for drilling holes or driving screws without the need for a power outlet.", status: "available", quantity: 3, lastMaintenance: "2024-02-20", nextMaintenance: "2024-08-20", imageUrl: "/images/cdrill.jpg" },
+            { name: "Black Split Locks", category: "misc", description: "Locking fasteners designed to prevent screws or bolts from loosening due to vibration.", status: "available", quantity: 100, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/slocks.jpg" },
+            { name: "DIN6796 Belleville Washers", category: "misc", description: "Conical-shaped washers that provide high load and spring characteristics in bolted connections.", status: "available", quantity: 100, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/bwasher.jpg" },
+            { name: "DIN125 Carbon Steel Flat Washer", category: "misc", description: "Flat washers made of carbon steel, used to distribute loads and prevent surface damage.", status: "available", quantity: 100, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/fwasher.jpg" },
+            { name: "Sandpaper", category: "tools", description: "Abrasive paper used for smoothing surfaces and preparing materials for finishing.", status: "available", quantity: 20, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/sandpaper.jpg" },
+            { name: "PVC Pipe Clamp", category: "misc", description: "A clamping device designed to secure PVC pipes in place during installation or repair.", status: "available", quantity: 20, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "images/pclamp.jpg" },
+            { name: "Tool Boxes", category: "tools", description: "Containers used for organizing and storing tools, keeping them accessible and secure.", status: "available", quantity: 5, lastMaintenance: "2024-01-01", nextMaintenance: "2024-07-01", imageUrl: "/images/tboxes.jpg" },
+            { name: "Hacksaw", category: "tools", description: "A hand tool with a fine-toothed blade used for cutting metal and plastic materials.", status: "available", quantity: 3, lastMaintenance: "2024-03-05", nextMaintenance: "2024-09-05", imageUrl: "/images/hacksaw.JPG" },
+            { name: "Plastic Vernier Caliper 150mm", category: "tools", description: "A precision measuring tool used for taking internal and external dimensions, with a range of 150mm.", status: "available", quantity: 2, lastMaintenance: "2024-02-25", nextMaintenance: "2024-08-25", imageUrl: "images/caliper.jpg" },
+            { name: "Small Level", category: "tools", description: "A compact leveling tool used to check the horizontal or vertical alignment of surfaces.", status: "available", quantity: 5, lastMaintenance: "2024-02-25", nextMaintenance: "2024-08-25", imageUrl: "images/slevel.jpg" },
+            { name: "Service Light", category: "tools", description: "Portable lighting equipment used to illuminate work areas, especially in low-light conditions.", status: "available", quantity: 3, lastMaintenance: "2024-03-10", nextMaintenance: "2024-09-10", imageUrl: "images/slight.jpg" },
+            { name: "Hammer", category: "tools", description: "A hand tool used for driving nails, breaking objects, or shaping materials.", status: "available", quantity: 5, lastMaintenance: "2024-02-15", nextMaintenance: "2024-08-15", imageUrl: "hammer.jpg" }
+            ]
+
+        function renderEquipment(equipmentToRender) {
+            const container = document.getElementById('equipment-container');
+            container.innerHTML = '';
+            equipmentToRender.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'equipment-card';
+                card.innerHTML = `
+                    <img href="${item.imageUrl}" alt="${item.name}" class="equipment-image" onerror="this.onerror=null; this.src='/api/placeholder/250/200';">
+            <h3 class="equipment-name">${item.name}</h3>
+            <p class="equipment-description">${item.description}</p>
+            <select class="equipment-status status-${item.status}" data-name="${item.name}">
+                <option value="available" ${item.status === 'available' ? 'selected' : ''}>Available</option>
+                <option value="in-use" ${item.status === 'in-use' ? 'selected' : ''}>In Use</option>
+                <option value="not-available" ${item.status === 'not-available' ? 'selected' : ''}>Not Available</option>
+            </select>
+            <input type="number" class="equipment-quantity" value="${item.quantity}" min="0" data-name="${item.name}">
+            <input type="date" class="equipment-maintenance" value="${item.nextMaintenance}" data-name="${item.name}">
+            <button class="checkout-btn" data-name="${item.name}" ${item.status !== 'available' || item.quantity === 0 ? 'disabled' : ''}>Check Out</button>
+                `;
+                container.appendChild(card);
+            });
+            
+            // Add event listeners
+            document.querySelectorAll('.equipment-status').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const itemName = e.target.getAttribute('data-name');
+                    const newStatus = e.target.value;
+                    updateEquipmentStatus(itemName, newStatus);
+                    e.target.className = `equipment-status status-${newStatus}`;
+                    updateCheckoutButton(itemName);
+                });
+            });
+
+            document.querySelectorAll('.equipment-quantity').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const itemName = e.target.getAttribute('data-name');
+                    const newQuantity = parseInt(e.target.value);
+                    updateEquipmentQuantity(itemName, newQuantity);
+                    updateCheckoutButton(itemName);
+                });
+            });
+
+            document.querySelectorAll('.equipment-maintenance').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const itemName = e.target.getAttribute('data-name');
+                    const newMaintenanceDate = e.target.value;
+                    updateEquipmentMaintenance(itemName, newMaintenanceDate);
+                });
+            });
+
+            document.querySelectorAll('.checkout-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const itemName = e.target.getAttribute('data-name');
+                    checkoutEquipment(itemName);
+                });
+            });
+        }
+
+        function filterEquipment(category, searchTerm) {
+            return equipment.filter(item => 
+                (category === 'all' || item.category === category) &&
+                (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 item.description.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+        }
+
+        function sortEquipment(equipment, sortBy) {
+            return [...equipment].sort((a, b) => {
+                if (sortBy === 'name') return a.name.localeCompare(b.name);
+                if (sortBy === 'status') return a.status.localeCompare(b.status);
+                if (sortBy === 'quantity') return b.quantity - a.quantity;
+            });
+        }
+
+        function updateEquipmentStatus(itemName, newStatus) {
+            const item = equipment.find(e => e.name === itemName);
+            if (item) {
+                item.status = newStatus;
+                saveEquipmentData();
+            }
+        }
+
+        function updateEquipmentQuantity(itemName, newQuantity) {
+            const item = equipment.find(e => e.name === itemName);
+            if (item) {
+                item.quantity = newQuantity;
+                saveEquipmentData();
+            }
+        }
+
+        function updateEquipmentMaintenance(itemName, newMaintenanceDate) {
+            const item = equipment.find(e => e.name === itemName);
+            if (item) {
+                item.nextMaintenance = newMaintenanceDate;
+                saveEquipmentData();
+            }
+        }
+
+        function checkoutEquipment(itemName) {
+            const item = equipment.find(e => e.name === itemName);
+            if (item && item.status === 'available' && item.quantity > 0) {
+                item.quantity--;
+                if (item.quantity === 0) {
+                    item.status = 'not-available';
+                }
+                saveEquipmentData();
+                renderEquipment(equipment);
+            }
+        }
+
+        function updateCheckoutButton(itemName) {
+            const item = equipment.find(e => e.name === itemName);
+            const button = document.querySelector(`.checkout-btn[data-name="${itemName}"]`);
+            if (button) {
+                button.disabled = item.status !== 'available' || item.quantity === 0;
+            }
+        }
+
+        function saveEquipmentData() {
+            localStorage.setItem('equipmentData', JSON.stringify(equipment));
+        }
+
+        function loadEquipmentData() {
+            const savedData = JSON.parse(localStorage.getItem('equipmentData'));
+            if (savedData) {
+                equipment.length = 0; // Clear the array
+                equipment.push(...savedData); // Add saved items
+            }
+        }
+
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const category = e.target.getAttribute('data-category');
+                const searchTerm = document.getElementById('search-bar').value;
+                const sortBy = document.getElementById('sort-dropdown').value;
+                let filteredEquipment = filterEquipment(category, searchTerm);
+                filteredEquipment = sortEquipment(filteredEquipment, sortBy);
+                renderEquipment(filteredEquipment);
+            });
+        });
+
+        document.getElementById('search-bar').addEventListener('input', (e) => {
+            const searchTerm = e.target.value;
+            const category = document.querySelector('nav a.active')?.getAttribute('data-category') || 'all';
+            const sortBy = document.getElementById('sort-dropdown').value;
+            let filteredEquipment = filterEquipment(category, searchTerm);
+            filteredEquipment = sortEquipment(filteredEquipment, sortBy);
+            renderEquipment(filteredEquipment);
+        });
+
+        document.getElementById('sort-dropdown').addEventListener('change', (e) => {
+            const sortBy = e.target.value;
+            const category = document.querySelector('nav a.active')?.getAttribute('data-category') || 'all';
+            const searchTerm = document.getElementById('search-bar').value;
+            let filteredEquipment = filterEquipment(category, searchTerm);
+            filteredEquipment = sortEquipment(filteredEquipment, sortBy);
+            renderEquipment(filteredEquipment);
+        });
+
+        document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+
+        // Load saved data and initial render
+        loadEquipmentData();
+        renderEquipment(equipment);
+    </script>
+</body>
+</html>
